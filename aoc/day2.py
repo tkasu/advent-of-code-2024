@@ -7,6 +7,9 @@ import torch
 # INPUT_FILE = "input/day2_part1_sample.txt"
 INPUT_FILE = "input/day2_part1.txt"
 
+torch.autograd.set_grad_enabled(False)
+device = torch.device("cpu")
+
 
 def read_input() -> torch.Tensor:
     data_pdf = pd.read_fwf(INPUT_FILE, header=None)
@@ -17,7 +20,7 @@ def read_input() -> torch.Tensor:
     data_pdf = data_pdf.astype(
         "float64"
     )  # hack as there is no nullable interger tensors in PyTorch
-    tensor = torch.tensor(data_pdf.values)
+    tensor = torch.tensor(data_pdf.values).to(device)
     return tensor
 
 
@@ -33,27 +36,40 @@ def part1(input_tensor: torch.Tensor) -> int:
     return is_valid_mask.sum().item()
 
 
-def create_combinations_with_drops(tensor_row: torch.Tensor) -> torch.Tensor:
+def create_combinations_with_drops(
+    tensor_row: torch.Tensor, filter_placeholder
+) -> torch.Tensor:
     """
-    Create a matrix of from a signle dimensional tensor with one element dropped in each row".
+    Create a matrix of from a signle dimensional tensor where dropped value is replaced with filter_placeholder.
     Dropped column is sequential, so column 0 is dropped for the first row, column 1 for the second row, etc.
-    """
-    filter_placeholder = (
-        np.inf
-    )  # Can't be NaN, as those are are needed for padding the tensor
 
-    tensor_row_matrix = tensor_row.repeat(tensor_row.shape[0], 1)
-    tensor_row_matrix = tensor_row_matrix.fill_diagonal_(filter_placeholder)
-    tensor_row_with_drops = tensor_row_matrix[
-        tensor_row_matrix != filter_placeholder
-    ].reshape(tensor_row.shape[0], tensor_row.shape[0] - 1)
-    return tensor_row_with_drops
+    filter_placeholder is used to fill the dropped values of the matric. Beware that this value can't be NaN,
+    as those are needed for padding the tensor.
+    """
+    tensor_len = tensor_row.shape[0]
+    tensor_row = torch.clone(tensor_row)
+    row_matrix = tensor_row.repeat(tensor_len, 1)
+
+    # tensor_row_matrix = tensor_row_matrix.fill_diagonal_(filter_placeholder)
+    # Custom implemention of fill_diagonal_, as fill_diagonal_ is not supported by vmap
+    diag = torch.diag(torch.full((1, tensor_len), filter_placeholder).squeeze()).to(
+        device
+    )
+    row_matrix_drop_filled = torch.where(diag == filter_placeholder, diag, row_matrix)
+    return row_matrix_drop_filled
 
 
 def part2(input_tensor: torch.Tensor) -> int:
-    rows_with_drops_tensor = torch.stack(
-        [create_combinations_with_drops(row) for row in input_tensor]
+    row_len = input_tensor[0].shape[0]
+    drop_placeholder = np.inf
+
+    rows_with_drops_tensor = torch.vmap(create_combinations_with_drops)(
+        input_tensor, filter_placeholder=drop_placeholder
     )
+    rows_with_drops_tensor = rows_with_drops_tensor[
+        rows_with_drops_tensor != drop_placeholder
+    ].reshape(-1, row_len, row_len - 1)
+
     diffs = torch.diff(rows_with_drops_tensor, dim=2)
     diff_is_consistent_mask = torch.all(diffs.isnan() | (diffs > 0), dim=2) | torch.all(
         diffs.isnan() | (diffs < 0), dim=2
