@@ -79,7 +79,7 @@ def run():
     print("Benchmarking...")
     benchmark_iterations = 100
     benchmark_s = timeit.timeit(
-        lambda: part2(input_tensor), number=benchmark_iterations
+        lambda: part2(read_input()), number=benchmark_iterations
     )
     print(f"Part 1 benchmark: {benchmark_s / benchmark_iterations * 1000 :.2f} ms")
 
