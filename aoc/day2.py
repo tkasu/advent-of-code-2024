@@ -81,7 +81,7 @@ def run():
     benchmark_s = timeit.timeit(
         lambda: part2(read_input()), number=benchmark_iterations
     )
-    print(f"Part 1 benchmark: {benchmark_s / benchmark_iterations * 1000 :.2f} ms")
+    print(f"Part 2 benchmark: {benchmark_s / benchmark_iterations * 1000 :.2f} ms")
 
 
 if __name__ == "__main__":
