@@ -1,3 +1,4 @@
+import io
 import timeit
 
 import numpy as np
@@ -12,14 +13,25 @@ device = torch.device("cpu")
 
 
 def read_input() -> torch.Tensor:
-    data_pdf = pd.read_fwf(INPUT_FILE, header=None)
-    if (
-        data_pdf.shape[1] == 1
-    ):  # to handle cases where there columns with varying lengths
-        data_pdf = data_pdf[0].str.split("\s+", expand=True)
-    data_pdf = data_pdf.astype(
-        "float64"
-    )  # hack as there is no nullable interger tensors in PyTorch
+    max_row_len = 0
+    # As we are reading the file line by line already to count the max_row_len
+    # we can just save the whole file as a csv string to avoid more file I/O
+    csv_string = ""
+    with open(INPUT_FILE) as file:
+        while line := file.readline():
+            csv_string += line
+            row_len = line.count(" ") + 1
+            max_row_len = max(row_len, max_row_len)
+
+    data_pdf = pd.read_csv(
+        io.StringIO(csv_string),
+        sep=" ",
+        header=None,
+        names=[str(i) for i in range(max_row_len)],
+        engine="c",
+        dtype=np.float64,
+        dtype_backend="numpy_nullable",
+    )
     tensor = torch.tensor(data_pdf.values).to(device)
     return tensor
 
