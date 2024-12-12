@@ -3,16 +3,13 @@ import pandas as pd
 import torch
 
 torch.autograd.set_grad_enabled(False)
-device = torch.device("cpu")
 
 FIND_STR = "XMAS"
-DECODER_MAP = dict(enumerate(FIND_STR))
+DECODER_MAP = dict(enumerate(FIND_STR, start=1))
 ENCODER_MAP = {v: k for k, v in DECODER_MAP.items()}
-FIND_TENSOR = torch.tensor(list(DECODER_MAP.keys())).to(device)
-FIND_TENSOR_REVERSED = torch.flip(FIND_TENSOR, [0])
 
 
-def read_input(input_file: str) -> torch.Tensor:
+def read_input(input_file: str, device: torch.device) -> torch.Tensor:
     pd.set_option("future.no_silent_downcasting", True)
 
     data_pdf = pd.read_csv(

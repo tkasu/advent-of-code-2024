@@ -66,14 +66,15 @@ def part1(input_tensor: torch.Tensor) -> int:
 
 
 def run():
-    input_tensor = read_input(INPUT_FILE)
+    input_tensor = read_input(INPUT_FILE, device=device)
     part1_solution = part1(input_tensor)
     print(f"Part 1 solution: {part1_solution}")
 
     print("Benchmarking...")
     benchmark_iterations = 100
     benchmark_s = timeit.timeit(
-        lambda: part1(read_input(INPUT_FILE)), number=benchmark_iterations
+        lambda: part1(read_input(INPUT_FILE, device=device)),
+        number=benchmark_iterations,
     )
     print(f"Part 1 benchmark: {benchmark_s / benchmark_iterations * 1000 :.2f} ms")
 
