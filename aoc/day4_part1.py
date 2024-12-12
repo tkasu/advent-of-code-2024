@@ -1,9 +1,9 @@
 import functools
 import timeit
 
-import numpy as np
-import pandas as pd
 import torch
+
+from aoc.day4_parsing import read_input, DECODER_MAP
 
 # INPUT_FILE = "input/day4_part1_sample.txt"
 INPUT_FILE = "input/day4_part1.txt"
@@ -11,27 +11,8 @@ INPUT_FILE = "input/day4_part1.txt"
 torch.autograd.set_grad_enabled(False)
 device = torch.device("cpu")
 
-FIND_STR = "XMAS"
-DECODER_MAP = dict(enumerate(FIND_STR))
-ENCODER_MAP = {v: k for k, v in DECODER_MAP.items()}
 FIND_TENSOR = torch.tensor(list(DECODER_MAP.keys())).to(device)
 FIND_TENSOR_REVERSED = torch.flip(FIND_TENSOR, [0])
-
-
-def read_input() -> torch.Tensor:
-    pd.set_option("future.no_silent_downcasting", True)
-
-    data_pdf = pd.read_csv(
-        INPUT_FILE,
-        sep=" ",
-        header=None,
-        engine="c",
-    )
-    char_pdf = data_pdf[0].str.split("", expand=True).iloc[:, 1:-1]
-    num_matrix = char_pdf.replace(ENCODER_MAP).values.astype(np.uint8)
-
-    tensor = torch.tensor(num_matrix).to(device)
-    return tensor
 
 
 def count_matching_tensors(
@@ -84,23 +65,15 @@ def part1(input_tensor: torch.Tensor) -> int:
     return count
 
 
-def part2(input_tensor: torch.Tensor) -> int:
-    pass
-
-
 def run():
-    input_tensor = read_input()
+    input_tensor = read_input(INPUT_FILE)
     part1_solution = part1(input_tensor)
     print(f"Part 1 solution: {part1_solution}")
-
-    input_tensor = read_input()
-    part2_solution = part2(input_tensor)
-    print(f"Part 2 solution: {part2_solution}")
 
     print("Benchmarking...")
     benchmark_iterations = 100
     benchmark_s = timeit.timeit(
-        lambda: part1(read_input()), number=benchmark_iterations
+        lambda: part1(read_input(INPUT_FILE)), number=benchmark_iterations
     )
     print(f"Part 1 benchmark: {benchmark_s / benchmark_iterations * 1000 :.2f} ms")
 

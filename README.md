@@ -7,7 +7,7 @@
 
 ## Run solutions
 
-`uv run python aoc/day1.py`
+`uv run python -m aoc.day1`
 
 Where you can replace the `day1` with the given day you want to run
 
