@@ -47,15 +47,44 @@ def match_sub_m(sub_m: torch.Tensor) -> bool:
     return False
 
 
+def unfold_subrectagles(input_m: torch.Tensor, rectangle_r: int) -> torch.Tensor:
+    """
+    Unfold [N, M] tensor to [B, rectangle_r, rectangle_r],
+    where rectangles are all the posible sub-rectangles within input_m.
+    """
+    rectangle_start_indices = torch.tensor(
+        [
+            (i, j)
+            for i in range(input_m.shape[0] - rectangle_r + 1)
+            for j in range(input_m.shape[1] - rectangle_r + 1)
+        ]
+    )
+    start_indices_rows = rectangle_start_indices[:, :1]
+    start_indices_cols = rectangle_start_indices[:, 1:]
+
+    base_m = (
+        torch.arange(rectangle_r).repeat(rectangle_r).view(rectangle_r, rectangle_r)
+    )
+    base_m_rows = base_m.T
+    base_m_cols = base_m
+
+    row_indices = base_m_rows + start_indices_rows.expand(
+        -1, rectangle_r * rectangle_r
+    ).view(-1, rectangle_r, rectangle_r)
+    col_indices = base_m_cols + start_indices_cols.expand(
+        -1, rectangle_r * rectangle_r
+    ).view(-1, rectangle_r, rectangle_r)
+    return input_m[row_indices, col_indices]
+
+
 def part2(input_tensor: torch.Tensor) -> int:
     target_rectangle_n = TARGET_TENSOR.shape[0]
 
+    rectangles = unfold_subrectagles(input_tensor, target_rectangle_n) * TARGET_MASK
+
     count = 0
-    for i in range(input_tensor.shape[0] - target_rectangle_n + 1):
-        for j in range(input_tensor.shape[1] - target_rectangle_n + 1):
-            sub_m = input_tensor[i : i + target_rectangle_n, j : j + target_rectangle_n]
-            if match_sub_m(sub_m):
-                count += 1
+    for target_tensor in TARGET_TENSORS:
+        count += torch.all(rectangles == target_tensor, dim=(1, 2)).sum().item()
 
     return count
 
