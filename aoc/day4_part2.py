@@ -39,14 +39,6 @@ TARGET_MASK = torch.tensor(
 ).to(device)
 
 
-def match_sub_m(sub_m: torch.Tensor) -> bool:
-    sub_m_mask = sub_m * TARGET_MASK
-    for target_tensor in TARGET_TENSORS:
-        if torch.all(sub_m_mask == target_tensor):
-            return True
-    return False
-
-
 def unfold_subrectagles(input_m: torch.Tensor, rectangle_r: int) -> torch.Tensor:
     """
     Unfold [N, M] tensor to [B, rectangle_r, rectangle_r],
